@@ -1,0 +1,633 @@
+/* Vector Phosphor: an early-80s vector arcade monitor. Black glass, phosphor strokes with bloom,
+   scanlines, corner brackets instead of boxes. One hue per signal, kept on slot, wire and token. */
+:root {
+    --glass: #020805;
+    --text: #c8ffdc;
+    --muted: #4fa775;
+    --frame: rgba(57, 255, 136, 0.32);
+    --c-time: #39ff88;   /* t */
+    --c-index: #ffb000;  /* I */
+    --c-mod: #b6ff3a;    /* m */
+    --c-out: #eafff2;    /* y, white-hot */
+    --c-param: #c98a14;  /* knob values */
+    --f-num: "VT323", ui-monospace, monospace;
+    --f-ui: "Share Tech Mono", ui-monospace, monospace;
+    --glow: 5px;
+    --stage-w: 1500px;
+    --stage-h: 1000px;
+    color-scheme: dark;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background: radial-gradient(ellipse at 50% 30%, #06140d 0%, var(--glass) 60%, #010302 100%) fixed;
+    background-color: var(--glass);
+    color: var(--text);
+    font-family: var(--f-ui);
+    font-size: 15px;
+    line-height: 1.4;
+    min-height: 100vh;
+    padding: 16px 0 40px;
+}
+
+/* ---------- Stage ---------- */
+.stage-wrap {
+    --s: 1;
+    position: relative;
+    width: calc(var(--stage-w) * var(--s));
+    height: calc(var(--stage-h) * var(--s));
+    margin: 0 auto;
+}
+
+.signal-flow {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: var(--stage-w);
+    height: var(--stage-h);
+    transform: scale(var(--s));
+    transform-origin: 0 0;
+}
+
+.scanlines {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    pointer-events: none;
+    background: repeating-linear-gradient(180deg, rgba(0, 0, 0, 0.3) 0 1px, transparent 1px 3px);
+    mix-blend-mode: multiply;
+}
+
+.panel {
+    position: absolute;
+    z-index: 2;
+    padding: 18px;
+    border: 1px solid var(--frame);
+}
+
+/* corner brackets */
+.panel::before,
+.panel::after {
+    content: "";
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--bracket, var(--c-time));
+    filter: drop-shadow(0 0 4px var(--bracket, var(--c-time)));
+}
+
+.panel::before { left: -2px; top: -2px; border-right: 0; border-bottom: 0; }
+.panel::after { right: -2px; bottom: -2px; border-left: 0; border-top: 0; }
+
+.panel h2 {
+    font: 400 16px var(--f-ui);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--c-time);
+    text-shadow: 0 0 6px currentColor;
+    margin-bottom: 14px;
+}
+
+/* Panel placement on the stage */
+.transport { left: 28px; top: 28px; width: 560px; height: 248px; }
+.clock-box { left: 624px; top: 28px; width: 270px; height: 232px; }
+.modulation-index { left: 1170px; top: 44px; width: 302px; height: 196px; --bracket: var(--c-index); }
+.modulation-index h2 { color: var(--c-index); }
+#modulator-box { left: 28px; top: 336px; width: 602px; height: 262px; }
+#carrier-box { left: 650px; top: 336px; width: 822px; height: 262px; }
+.scope { left: 28px; top: 650px; width: 1040px; height: 330px; }
+.dac-box { left: 1092px; top: 676px; width: 340px; height: 180px; --bracket: var(--c-out); text-align: center; }
+.dac-box h2 { color: var(--c-out); margin: 4px 0 6px; }
+.dac-box p { color: var(--muted); font-size: 14px; }
+
+/* ---------- Transport ---------- */
+.brand {
+    font: 400 56px/0.9 var(--f-num);
+    color: var(--c-time);
+    text-shadow: 0 0 6px var(--c-time), 0 0 20px rgba(57, 255, 136, 0.6);
+}
+
+.brand-sub {
+    color: var(--muted);
+    font-size: 14px;
+    margin-top: 4px;
+}
+
+.transport-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 14px;
+}
+
+.transport-knobs {
+    display: flex;
+    gap: 26px;
+}
+
+.transport-knobs .param-group { gap: 4px; }
+.transport-knobs .knob-control { margin-bottom: 4px; }
+
+.knob-value {
+    font: 400 22px/1 var(--f-num);
+    color: var(--text);
+    text-shadow: 0 0 5px currentColor;
+}
+
+.btns {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+button {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    height: 34px;
+    padding: 0 13px;
+    font: 400 15px var(--f-ui);
+    letter-spacing: 0.06em;
+    color: var(--c-time);
+    background: transparent;
+    border: 1px solid rgba(57, 255, 136, 0.5);
+    border-radius: 0;
+    cursor: pointer;
+    text-shadow: 0 0 5px currentColor;
+}
+
+button svg {
+    width: 12px;
+    height: 12px;
+    fill: currentColor;
+}
+
+button:hover:not(:disabled) {
+    background: rgba(57, 255, 136, 0.1);
+    box-shadow: 0 0 10px rgba(57, 255, 136, 0.35);
+}
+
+button:active:not(:disabled) { transform: translateY(1px); }
+
+button:focus-visible,
+#jump-input:focus-visible {
+    outline: 2px solid var(--c-out);
+    outline-offset: 2px;
+}
+
+button:disabled {
+    opacity: 0.3;
+    cursor: default;
+    text-shadow: none;
+}
+
+/* A running animation lights its Play button the way a lit membrane switch would */
+#start-btn:disabled {
+    opacity: 1;
+    color: var(--glass);
+    background: var(--c-time);
+    box-shadow: 0 0 12px var(--c-time);
+    text-shadow: none;
+}
+
+.audio-btn { color: var(--c-index); border-color: rgba(255, 176, 0, 0.55); }
+.audio-btn:hover:not(:disabled) { background: rgba(255, 176, 0, 0.1); box-shadow: 0 0 10px rgba(255, 176, 0, 0.35); }
+#audio-start-btn:disabled { opacity: 1; color: var(--glass); background: var(--c-index); box-shadow: 0 0 12px var(--c-index); text-shadow: none; }
+
+.inline-label { color: var(--muted); font-size: 15px; }
+
+#jump-input {
+    width: 84px;
+    height: 34px;
+    padding: 0 8px;
+    font: 400 22px var(--f-num);
+    color: var(--text);
+    background: var(--glass);
+    border: 1px solid rgba(57, 255, 136, 0.5);
+    border-radius: 0;
+}
+
+/* ---------- Clock ---------- */
+.clock-values {
+    display: grid;
+    gap: 2px;
+    font: 400 24px/1.15 var(--f-num);
+    margin-bottom: 14px;
+    white-space: pre;
+}
+
+.clock-values .label { color: var(--muted); }
+
+/* ---------- Ports, slots, tokens ---------- */
+.sample-token,
+.slot-value,
+.moving-token {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 32px;
+    padding: 0 6px;
+    font: 400 24px/1 var(--f-num);
+    white-space: nowrap;
+    background: var(--glass);
+    border: 2px solid var(--k);
+    color: var(--k);
+    box-shadow: 0 0 var(--glow) var(--k);
+    text-shadow: 0 0 5px currentColor;
+    transition: opacity 0.25s, filter 0.25s;
+}
+
+#clock-token { --k: var(--c-time); width: calc(14ch + 16px); }
+#mi-output-token { --k: var(--c-index); width: calc(5ch + 16px); }
+#dac-input-token { --k: var(--c-out); width: calc(7ch + 16px); }
+
+.formula-substituted {
+    display: flex;
+    align-items: flex-start;
+    gap: 4px;
+    white-space: nowrap;
+    font: 400 26px var(--f-num);
+    color: var(--text);
+    padding: 14px 10px 8px;
+    border: 1px solid rgba(57, 255, 136, 0.18);
+}
+
+.tx {
+    height: 32px;
+    line-height: 32px;
+    text-shadow: 0 0 5px rgba(200, 255, 220, 0.5);
+}
+
+.slot {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.slot-label {
+    font: 400 17px/1.1 var(--f-num);
+    color: var(--muted);
+    margin-top: 2px;
+}
+
+/* Fixed widths sized for the longest value, so the equation never shifts */
+.time-slot { --k: var(--c-time); }
+.index-slot { --k: var(--c-index); }
+.mod-slot, .out-slot { --k: var(--c-mod); }
+.carrier-out-slot { --k: var(--c-out); }
+.param-slot { --k: var(--c-param); }
+.param-slot .slot-value { color: var(--text); width: calc(4ch + 16px); }
+.time-slot .slot-value { width: calc(10ch + 16px); }
+.index-slot .slot-value { width: calc(5ch + 16px); }
+.mod-slot .slot-value, .out-slot .slot-value, .carrier-out-slot .slot-value { width: calc(7ch + 16px); }
+
+/* A port whose token has not arrived shows the previous sample's value, fading like phosphor afterglow */
+.stale {
+    opacity: 0.3;
+    filter: blur(0.5px);
+    box-shadow: none;
+}
+
+.moving-token {
+    position: absolute;
+    z-index: 10;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 14px var(--k);
+}
+
+.moving-token.clock-token { --k: var(--c-time); }
+.moving-token.index-token { --k: var(--c-index); }
+.moving-token.mod-token { --k: var(--c-mod); }
+.moving-token.carrier-token { --k: var(--c-out); }
+
+/* ---------- Knobs ---------- */
+.parameters {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 22px;
+}
+
+#carrier-box .parameters {
+    justify-content: flex-start;
+    gap: 40px;
+    padding-left: 10px;
+}
+
+.param-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.param-group label {
+    font-size: 15px;
+    color: var(--text);
+    padding-bottom: 3px; /* the underline is drawn as the first segment of the knob's line */
+    white-space: nowrap;
+}
+
+.transport-knobs .param-group label,
+.modulation-index .param-group label { color: var(--muted); padding-bottom: 0; }
+
+.knob-control {
+    --knob-angle: -135deg;
+    --p: 0;
+    --k: var(--c-mod);
+    position: relative;
+    width: 60px;
+    height: 60px;
+    cursor: ns-resize;
+    touch-action: none;
+}
+
+#carrier-box .knob-control { --k: var(--c-out); }
+.modulation-index .knob-control { --k: var(--c-index); }
+.transport .knob-control { --k: var(--c-time); }
+
+/* tick ring */
+.knob-control::before {
+    content: "";
+    position: absolute;
+    inset: -7px;
+    border-radius: 50%;
+    background: repeating-conic-gradient(from 225deg, rgba(57, 255, 136, 0.5) 0 1.5deg, transparent 1.5deg 13.5deg);
+    -webkit-mask: radial-gradient(circle, transparent 33px, #000 33.5px);
+    mask: radial-gradient(circle, transparent 33px, #000 33.5px);
+}
+
+/* value arc from minimum to the current setting */
+.knob-face {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: conic-gradient(from 225deg, var(--k) calc(var(--p) * 270deg), rgba(57, 255, 136, 0.12) 0 270deg, transparent 0);
+    filter: drop-shadow(0 0 4px var(--k));
+}
+
+.knob-face::before {
+    content: "";
+    position: absolute;
+    inset: 5px;
+    border-radius: 50%;
+    background: var(--glass);
+    box-shadow: inset 0 0 0 1px rgba(57, 255, 136, 0.45);
+}
+
+.knob-pointer {
+    position: absolute;
+    top: 9px;
+    left: calc(50% - 1.5px);
+    width: 3px;
+    height: 21px;
+    background: var(--k);
+    box-shadow: 0 0 6px var(--k);
+    transform: rotate(var(--knob-angle));
+    transform-origin: 50% 21px;
+}
+
+.knob-input {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    pointer-events: none; /* drag is handled on .knob-control */
+}
+
+.knob-control:focus-within .knob-face::before {
+    box-shadow: inset 0 0 0 2px var(--c-out);
+}
+
+.mi-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 4px 0;
+}
+
+/* ---------- Wires ---------- */
+.connections,
+.parameter-arrows {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    pointer-events: none;
+}
+
+.connections { z-index: 3; }
+.parameter-arrows { z-index: 4; }
+
+.connection {
+    fill: none;
+    stroke: var(--k);
+    stroke-width: 1.8;
+    stroke-linejoin: round;
+    filter: drop-shadow(0 0 3px var(--k)) drop-shadow(0 0 7px var(--k));
+}
+
+.clock-connection { --k: var(--c-time); marker-end: url(#arrow-time); }
+.index-connection { --k: var(--c-index); marker-end: url(#arrow-index); }
+.modulation-connection { --k: var(--c-mod); marker-end: url(#arrow-mod); }
+.output-connection { --k: var(--c-out); marker-end: url(#arrow-out); }
+
+#arrow-time path { fill: var(--c-time); }
+#arrow-index path { fill: var(--c-index); }
+#arrow-mod path { fill: var(--c-mod); }
+#arrow-out path { fill: var(--c-out); }
+
+.token-route {
+    fill: none;
+    stroke: none;
+}
+
+.parameter-arrows path {
+    fill: none;
+    stroke: var(--c-param);
+    stroke-width: 1.5;
+    stroke-linejoin: round;
+    marker-end: url(#parameter-arrowhead);
+    filter: drop-shadow(0 0 3px rgba(201, 138, 20, 0.7));
+}
+
+.parameter-arrows marker path {
+    fill: var(--c-param);
+    stroke: none;
+    filter: none;
+}
+
+/* ---------- Scope ---------- */
+.scope-trace {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1000 / 100;
+    margin-bottom: 8px;
+    background: linear-gradient(rgba(57, 255, 136, 0.1) 1px, transparent 1px) 0 0 / 100% 25%,
+                linear-gradient(90deg, rgba(57, 255, 136, 0.07) 1px, transparent 1px) 0 0 / 10% 100%;
+    border-bottom: 1px solid rgba(57, 255, 136, 0.1);
+}
+
+.scope-trace .zero { stroke: var(--muted); stroke-dasharray: 3 4; stroke-width: 1; opacity: 0.6; }
+.scope-trace .wave { fill: none; stroke: var(--c-out); stroke-width: 1.6; vector-effect: non-scaling-stroke; filter: drop-shadow(0 0 3px var(--c-out)) drop-shadow(0 0 7px rgba(234, 255, 242, 0.6)); }
+.scope-trace .ahead { fill: none; stroke: var(--c-out); stroke-width: 1.2; vector-effect: non-scaling-stroke; opacity: 0.22; }
+.scope-trace .dot { fill: var(--c-out); }
+.scope-trace .now { fill: var(--glass); stroke: var(--c-out); stroke-width: 2.5; }
+.scope-trace text { fill: var(--muted); font: 400 17px var(--f-num); }
+
+.scope-label {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 4px;
+}
+
+
+/* ---------- Docs window ---------- */
+.docs {
+    position: relative;
+    width: min(100% - 32px, 980px);
+    margin: 32px auto 0;
+    padding: 28px 32px 32px;
+    border: 1px solid var(--frame);
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+.docs::before,
+.docs::after {
+    content: "";
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--c-time);
+    filter: drop-shadow(0 0 4px var(--c-time));
+}
+
+.docs::before { left: -2px; top: -2px; border-right: 0; border-bottom: 0; }
+.docs::after { right: -2px; bottom: -2px; border-left: 0; border-top: 0; }
+
+.docs h2 {
+    font: 400 40px/1 var(--f-num);
+    color: var(--c-time);
+    text-shadow: 0 0 6px var(--c-time), 0 0 18px rgba(57, 255, 136, 0.5);
+    margin-bottom: 14px;
+}
+
+.docs h3 {
+    font: 400 16px var(--f-ui);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--c-time);
+    text-shadow: 0 0 6px currentColor;
+    margin: 30px 0 12px;
+}
+
+.docs p,
+.docs li { max-width: 74ch; }
+.docs p + p { margin-top: 10px; }
+.docs-lead { font-size: 17px; }
+.docs b, .docs th[scope="row"] { color: var(--c-out); font-weight: 400; }
+.docs em { color: var(--c-mod); font-style: normal; }
+
+.docs a {
+    color: var(--c-index);
+    text-decoration: underline;
+    text-decoration-color: rgba(255, 176, 0, 0.45);
+    text-underline-offset: 3px;
+}
+
+.docs a:hover { text-shadow: 0 0 6px var(--c-index); text-decoration-color: currentColor; }
+.docs a:focus-visible { outline: 2px solid var(--c-out); outline-offset: 2px; }
+
+.docs-steps {
+    counter-reset: step;
+    list-style: none;
+    display: grid;
+    gap: 12px;
+}
+
+.docs-steps li {
+    counter-increment: step;
+    position: relative;
+    padding-left: 44px;
+}
+
+.docs-steps li::before {
+    content: counter(step);
+    position: absolute;
+    left: 0;
+    top: -2px;
+    width: 30px;
+    height: 30px;
+    display: grid;
+    place-items: center;
+    font: 400 24px/1 var(--f-num);
+    color: var(--c-time);
+    border: 1px solid rgba(57, 255, 136, 0.6);
+    box-shadow: 0 0 6px rgba(57, 255, 136, 0.4);
+}
+
+.docs-note { margin-top: 14px; color: var(--muted); }
+
+.docs-list,
+.docs-sources {
+    list-style: none;
+    display: grid;
+    gap: 8px;
+}
+
+.docs-list li,
+.docs-sources li {
+    position: relative;
+    padding-left: 22px;
+}
+
+.docs-list li::before,
+.docs-sources li::before {
+    content: ">";
+    position: absolute;
+    left: 0;
+    color: var(--c-time);
+}
+
+.docs-sources { font-size: 15px; color: var(--muted); }
+
+.docs-table-wrap { overflow-x: auto; margin-top: 14px; }
+
+.docs-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 15px;
+}
+
+.docs-table th,
+.docs-table td {
+    text-align: left;
+    vertical-align: top;
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(57, 255, 136, 0.15);
+}
+
+.docs-table thead th {
+    font: 400 13px var(--f-ui);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    border-bottom-color: rgba(57, 255, 136, 0.4);
+}
+
+.docs-table th[scope="row"] { white-space: nowrap; }
+
+@media (prefers-reduced-motion: reduce) {
+    .sample-token, .slot-value { transition: none; }
+}

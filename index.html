@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FM Synth Visualizer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Fixed-size stage (see --stage-w/--stage-h in style.css), scaled to the window width by app.js -->
+    <div class="stage-wrap">
+        <main class="signal-flow">
+            <!-- Transport -->
+            <section class="panel transport">
+                <div class="transport-top">
+                    <div>
+                        <h1 class="brand">FM Synth</h1>
+                        <p class="brand-sub">two operators, one sample at a time</p>
+                    </div>
+                    <div class="transport-knobs">
+                        <div class="param-group">
+                            <div class="knob-control">
+                                <div class="knob-face" aria-hidden="true"><span class="knob-pointer"></span></div>
+                                <input class="knob-input" type="range" id="speed-control" data-scale="log" min="0.1" max="1" step="0.1" value="0.1" aria-label="Animation speed">
+                            </div>
+                            <label for="speed-control">Speed</label>
+                            <span class="knob-value" id="speed-display">0.1/s</span>
+                        </div>
+                        <div class="param-group">
+                            <div class="knob-control">
+                                <div class="knob-face" aria-hidden="true"><span class="knob-pointer"></span></div>
+                                <input class="knob-input" type="range" id="volume-control" min="0" max="1" step="0.01" value="0.05" aria-label="Master volume">
+                            </div>
+                            <label for="volume-control">Volume</label>
+                            <span class="knob-value" id="volume-display">0.05</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="btns">
+                    <button id="start-btn"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2 1 L11 6 L2 11 Z"/></svg>Play</button>
+                    <button id="pause-btn" disabled><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2 1H5V11H2Z M7 1H10V11H7Z"/></svg>Pause</button>
+                    <button id="step-btn"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 1 L7 6 L1 11 Z M8 1H11V11H8Z"/></svg>Step</button>
+                    <button id="reset-btn"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 1H3V11H1Z M11 1 L4 6 L11 11 Z"/></svg>Reset</button>
+                </div>
+                <div class="btns">
+                    <label class="inline-label" for="jump-input">Jump to n</label>
+                    <input type="number" id="jump-input" min="0" value="0">
+                    <button id="jump-btn">Jump</button>
+                    <button id="audio-start-btn" class="audio-btn"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 4H4L8 1V11L4 8H1Z"/></svg>Audio on</button>
+                    <button id="audio-stop-btn" class="audio-btn" disabled>Off</button>
+                </div>
+            </section>
+
+            <!-- Sample Clock -->
+            <section class="panel clock-box">
+                <h2>Sample Clock</h2>
+                <div class="clock-values">
+                    <div><span class="label">n  =</span> <span id="sample-index">0</span></div>
+                    <div><span class="label">t  =</span> <span id="sample-time">0.000 ms</span></div>
+                    <div><span class="label">Fs =</span> <span id="sample-rate">48000 Hz</span></div>
+                </div>
+                <div class="sample-token" id="clock-token"><span class="token-label">t = 0.000 ms</span></div>
+            </section>
+
+            <!-- Modulation Index -->
+            <section class="panel modulation-index">
+                <h2>Modulation Index</h2>
+                <div class="mi-content">
+                    <div class="param-group">
+                        <div class="knob-control">
+                            <div class="knob-face" aria-hidden="true"><span class="knob-pointer"></span></div>
+                            <input class="knob-input" type="range" id="modulation-index" min="0" max="10" step="0.01" value="2.82">
+                        </div>
+                        <label id="modulation-index-label" for="modulation-index">Index I</label>
+                    </div>
+                    <div class="sample-token" id="mi-output-token"><span class="token-value">2.00</span></div>
+                </div>
+            </section>
+
+            <!-- Modulator -->
+            <section class="panel operator-box" id="modulator-box">
+                <h2>Modulator</h2>
+                <div class="formula">
+                    <div class="formula-substituted"><span class="tx">m(t) =</span><span class="slot param-slot"><span class="slot-value"><span id="mod-amplitude-term">1.00</span></span><span class="slot-label">Am</span></span><span class="tx">× sin(2π ×</span><span class="slot param-slot"><span class="slot-value"><span id="mod-frequency-term">220</span></span><span class="slot-label">fm</span></span><span class="tx">×</span><span class="slot time-slot"><span class="slot-value" id="mod-time-slot"><span id="mod-t">0.000 ms</span></span><span class="slot-label">t</span></span><span class="tx">) =</span><span class="slot out-slot"><span class="slot-value" id="mod-output-token"><span class="token-value">0.0000</span></span><span class="slot-label">m(t)</span></span></div>
+                </div>
+                <div class="parameters">
+                    <div class="param-group">
+                        <label id="mod-amplitude-label" for="mod-amplitude">Amplitude Am</label>
+                        <div class="knob-control">
+                            <div class="knob-face" aria-hidden="true"><span class="knob-pointer"></span></div>
+                            <input class="knob-input" type="range" id="mod-amplitude" min="0" max="1" step="0.01" value="0.78">
+                        </div>
+                    </div>
+                    <div class="param-group">
+                        <label id="mod-frequency-label" for="mod-frequency">Frequency fm</label>
+                        <div class="knob-control">
+                            <div class="knob-face" aria-hidden="true"><span class="knob-pointer"></span></div>
+                            <input class="knob-input" type="range" id="mod-frequency" data-scale="log" min="1" max="2000" step="1" value="269">
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Carrier -->
+            <section class="panel operator-box" id="carrier-box">
+                <h2>Carrier</h2>
+                <div class="formula">
+                    <div class="formula-substituted"><span class="tx">y(t) =</span><span class="slot param-slot"><span class="slot-value"><span id="carrier-amplitude-term">0.20</span></span><span class="slot-label">Ac</span></span><span class="tx">× sin(2π ×</span><span class="slot param-slot"><span class="slot-value"><span id="carrier-frequency-term">440</span></span><span class="slot-label">fc</span></span><span class="tx">×</span><span class="slot time-slot"><span class="slot-value" id="carrier-time-slot"><span id="carrier-t">0.000 ms</span></span><span class="slot-label">t</span></span><span class="tx">+</span><span class="slot index-slot"><span class="slot-value" id="carrier-index-slot"><span id="modulation-index-term">2.00</span></span><span class="slot-label">I</span></span><span class="tx">×</span><span class="slot mod-slot"><span class="slot-value" id="carrier-mod-slot"><span id="carrier-mod-input">0.0000</span></span><span class="slot-label">m(t)</span></span><span class="tx">) =</span><span class="slot carrier-out-slot"><span class="slot-value" id="carrier-output-token"><span class="token-value">0.0000</span></span><span class="slot-label">y(t)</span></span></div>
+                </div>
+                <div class="parameters">
+                    <div class="param-group">
+                        <label id="carrier-amplitude-label" for="carrier-amplitude">Amplitude Ac</label>
+                        <div class="knob-control">
+                            <div class="knob-face" aria-hidden="true"><span class="knob-pointer"></span></div>
+                            <input class="knob-input" type="range" id="carrier-amplitude" min="0" max="1" step="0.01" value="0.76">
+                        </div>
+                    </div>
+                    <div class="param-group">
+                        <label id="carrier-frequency-label" for="carrier-frequency">Frequency fc</label>
+                        <div class="knob-control">
+                            <div class="knob-face" aria-hidden="true"><span class="knob-pointer"></span></div>
+                            <input class="knob-input" type="range" id="carrier-frequency" data-scale="log" min="20" max="2000" step="1" value="619">
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Scope -->
+            <section class="panel scope">
+                <h2>Output y[n] · 10 ms</h2>
+                <p class="scope-label">Full speed: all <span class="rate-text">48 000</span> samples a second, as the audio plays them</p>
+                <svg id="scope-full" class="scope-trace" viewBox="0 0 1000 100" aria-label="Every output sample in the window"><line class="zero" x1="0" x2="1000" y1="50" y2="50"></line><polyline class="wave" id="scope-full-line"></polyline></svg>
+                <p class="scope-label">Animation, one sample at a time · bright: sent to the DAC, dim: still to come</p>
+                <svg id="scope-svg" class="scope-trace" viewBox="0 0 1000 100" aria-label="Samples traced by the animation"></svg>
+            </section>
+
+            <!-- DAC -->
+            <section class="panel dac-box">
+                <!-- Input port first, so the wire drops onto it without crossing any text -->
+                <div class="slot dac-input">
+                    <div class="sample-token" id="dac-input-token"><span class="token-value">0.0000</span></div>
+                    <span class="slot-label">y[n]</span>
+                </div>
+                <h2>DAC &amp; Audio Out</h2>
+                <p><span class="rate-text">48 000</span> numbers a second become a voltage here.</p>
+            </section>
+
+            <!-- Signal wires, drawn over the panels -->
+            <svg class="connections" aria-hidden="true">
+                <defs>
+                    <marker id="arrow-time" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z"></path></marker>
+                    <marker id="arrow-index" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z"></path></marker>
+                    <marker id="arrow-mod" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z"></path></marker>
+                    <marker id="arrow-out" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z"></path></marker>
+                </defs>
+                <path class="connection clock-connection" id="clock-to-mod"></path>
+                <path class="connection clock-connection" id="clock-to-carrier"></path>
+                <path class="connection modulation-connection" id="mod-to-carrier"></path>
+                <path class="connection index-connection" id="index-to-carrier"></path>
+                <path class="token-route" id="token-route"></path>
+                <path class="connection output-connection" id="carrier-to-dac"></path>
+            </svg>
+
+            <svg class="parameter-arrows" aria-hidden="true">
+                <defs>
+                    <marker id="parameter-arrowhead" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z"></path></marker>
+                </defs>
+                <path id="mod-amplitude-arrow"></path>
+                <path id="mod-frequency-arrow"></path>
+                <path id="carrier-amplitude-arrow"></path>
+                <path id="carrier-frequency-arrow"></path>
+            </svg>
+
+            <div class="scanlines" aria-hidden="true"></div>
+        </main>
+    </div>
+
+    <section class="docs" aria-labelledby="docs-title">
+        <h2 id="docs-title">How it works</h2>
+        <p class="docs-lead">Every number above is computed for one sample at a time. The audio engine runs exactly this calculation <span class="rate-text">48 000</span> times a second; the animation slows it down to between one sample every 10 seconds and one per second, so you can follow a single sample from the clock to the DAC. No recorded sound and no precomputed waveform is involved at any point. That is also how the Yamaha DX7 made sound.</p>
+
+        <h3>One sample, step by step</h3>
+        <ol class="docs-steps">
+            <li><b>Sample clock.</b> Counts samples n = 0, 1, 2, … and turns the count into a time, t = n / Fs. At 48 000 Hz two samples are 20.83 μs apart. The same t goes to both operators. The DX7 ran at a fixed 49 096 samples a second (<a target="_blank" rel="noopener" href="https://www.righto.com/2021/11/reverse-engineering-yamaha-dx7.html">Shirriff, part 1</a>; <a target="_blank" rel="noopener" href="https://github.com/google/music-synthesizer-for-android/blob/master/wiki/Dx7Hardware.wiki">msfa DX7 hardware notes</a>).</li>
+            <li><b>Modulator.</b> Computes m(t) = Am × sin(2π × fm × t). It needs only t and its own two knobs, and produces one number. Nothing about earlier or later samples is stored.</li>
+            <li><b>Modulation index.</b> I scales how far m(t) pushes the carrier. At I = 0 the carrier is a pure sine; larger values add more sidebands, which is the core result of <a target="_blank" rel="noopener" href="https://ccrma.stanford.edu/papers/synthesis-of-complex-audio-spectra-means-of-frequency-modulation">Chowning's 1973 paper</a>.</li>
+            <li><b>Carrier.</b> Computes y(t) = Ac × sin(2π × fc × t + I × m(t)). The modulator's number is added to the carrier's <em>phase</em>, inside the sine, not to its output. Strictly this is phase modulation; it is what the DX7 does, and it is mathematically equivalent to FM (<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Frequency_modulation_synthesis">Wikipedia: FM synthesis</a>). On the DX7 chip, "the first adder adds the modulation value to the current phase value" (<a target="_blank" rel="noopener" href="https://www.righto.com/2021/11/reverse-engineering-yamaha-dx7.html">Shirriff, part 1</a>).</li>
+            <li><b>DAC.</b> y(t) is a single number. The digital-to-analog converter turns the stream of these numbers into a voltage. The DX7 used a 12-bit BA9221 DAC followed by a low-pass filter around 16 kHz that smooths the steps into a continuous waveform (<a target="_blank" rel="noopener" href="https://www.righto.com/2022/02/yamaha-dx7-chip-reverse-engineering.html">Shirriff, part 5</a>). Then n goes up by one and everything repeats.</li>
+        </ol>
+        <p class="docs-note">While a sample is in flight, slots that are still waiting for their token keep the previous sample's value, dimmed. The knob values are local to each box and are always current.</p>
+
+        <h3>Same principle as the DX7</h3>
+        <p>The DX7's sound chip, the YM21280 "OPS", computes every operator's output fresh for every sample. It "operates sequentially, updating one oscillator and computing one operator at a time", cycles through 96 operator slots (16 voices × 6 operators), and starts the cycle over 49 096 times a second (<a target="_blank" rel="noopener" href="https://www.righto.com/2021/11/reverse-engineering-yamaha-dx7.html">Shirriff, part 1</a>).</p>
+        <div class="docs-table-wrap">
+            <table class="docs-table">
+                <thead><tr><th scope="col">Step</th><th scope="col">This visualizer</th><th scope="col">DX7 (YM21280 OPS chip)</th></tr></thead>
+                <tbody>
+                    <tr><th scope="row">Time base</th><td>t = n / Fs at 48 000 Hz. The audio engine keeps a phase accumulator per operator and advances it every sample.</td><td>A phase counter per oscillator, advanced every sample at 49 096 Hz (<a target="_blank" rel="noopener" href="https://github.com/google/music-synthesizer-for-android/blob/master/wiki/Dx7Hardware.wiki">msfa</a>).</td></tr>
+                    <tr><th scope="row">Sine</th><td>Math.sin of the phase, in double precision.</td><td>A log-sine ROM indexed by phase (only a quarter cycle is stored), then an exponential ROM to undo the logarithm (<a target="_blank" rel="noopener" href="https://www.righto.com/2021/12/yamaha-dx7-reverse-engineering-part-iii.html">log-sine ROM</a>, <a target="_blank" rel="noopener" href="https://www.righto.com/2021/11/reverse-engineering-yamaha-dx7_28.html">exponential circuit</a>).</td></tr>
+                    <tr><th scope="row">Modulation</th><td>I × m(t) is added to the carrier's phase.</td><td>The modulation value is added to the phase before the sine lookup (<a target="_blank" rel="noopener" href="https://www.righto.com/2021/11/reverse-engineering-yamaha-dx7.html">part 1</a>).</td></tr>
+                    <tr><th scope="row">Operators</th><td>Two: modulator, then carrier, in that order every sample.</td><td>Six per voice in 32 algorithms, computed from operator 6 down to 1; "the signal from operator N+1 enters, and is used to compute the modulation for operator N" (<a target="_blank" rel="noopener" href="https://www.righto.com/2021/12/yamaha-dx7-chip-reverse-engineering.html">Shirriff, part 4</a>).</td></tr>
+                    <tr><th scope="row">Output</th><td>One y per sample to the Web Audio output.</td><td>Time-multiplexed samples to a 12-bit DAC and a 16 kHz low-pass filter (<a target="_blank" rel="noopener" href="https://www.righto.com/2022/02/yamaha-dx7-chip-reverse-engineering.html">part 5</a>).</td></tr>
+                    <tr><th scope="row">Stored audio</th><td>None.</td><td>None. The ROMs hold the sine and exponential functions, not recorded sound.</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h3>What this is not</h3>
+        <p><a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Sample-based_synthesis">Sample-based synthesizers</a> store recordings and play them back. <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Wavetable_synthesis">Wavetable synthesizers</a> store whole waveform cycles and read through them. Here, as in the DX7, the only table is the sine function itself, looked up by phase. The waveform on the scope exists only as the sequence of numbers computed one after another; the full-speed trace computes those same numbers for display.</p>
+
+        <h3>Simplifications</h3>
+        <ul class="docs-list">
+            <li>Math.sin in floating point instead of the DX7's fixed-point log-sine and exponential ROMs.</li>
+            <li>Two operators and one fixed algorithm instead of six operators and 32 algorithms; no envelopes and no operator feedback.</li>
+            <li>48 000 Hz instead of 49 096 Hz.</li>
+            <li>Changed knobs are smoothed over 128 samples in the audio engine to avoid clicks; the animation uses the new value directly.</li>
+        </ul>
+
+        <h3>Using the controls</h3>
+        <ul class="docs-list">
+            <li>Drag a knob up or down; half the window height covers its full range. The mouse wheel and arrow keys make small steps. Frequency and speed knobs are logarithmic.</li>
+            <li>Play runs the animation, Step advances exactly one sample, Reset returns to n = 0, Jump goes to any sample.</li>
+            <li>Audio on plays the same formula in real time. The animation and the audio run on separate timelines.</li>
+        </ul>
+
+        <h3>Sources</h3>
+        <ul class="docs-sources">
+            <li><a target="_blank" rel="noopener" href="https://www.righto.com/2021/11/reverse-engineering-yamaha-dx7.html">Ken Shirriff: Reverse-engineering the Yamaha DX7 synthesizer's sound chip from die photos</a> — sequential per-sample operation, 96 oscillators, 49 096 Hz, modulation added to phase.</li>
+            <li><a target="_blank" rel="noopener" href="https://www.righto.com/2021/11/reverse-engineering-yamaha-dx7_28.html">Ken Shirriff: The Yamaha DX7 synthesizer's clever exponential circuit</a> — the exponential ROM.</li>
+            <li><a target="_blank" rel="noopener" href="https://www.righto.com/2021/12/yamaha-dx7-reverse-engineering-part-iii.html">Ken Shirriff: Part III, inside the log-sine ROM</a> — how the sine is generated from the phase.</li>
+            <li><a target="_blank" rel="noopener" href="https://www.righto.com/2021/12/yamaha-dx7-chip-reverse-engineering.html">Ken Shirriff: Part 4, how algorithms are implemented</a> — operator order and how one operator modulates the next.</li>
+            <li><a target="_blank" rel="noopener" href="https://www.righto.com/2022/02/yamaha-dx7-chip-reverse-engineering.html">Ken Shirriff: Part V, the output circuitry</a> — the DAC and the 16 kHz filter.</li>
+            <li><a target="_blank" rel="noopener" href="https://github.com/google/music-synthesizer-for-android/blob/master/wiki/Dx7Hardware.wiki">Raph Levien, music-synthesizer-for-android: DX7 hardware notes</a> — 49 096 Hz, 96 subsamples, phase accumulator, log-sine and exponential tables.</li>
+            <li><a target="_blank" rel="noopener" href="https://ccrma.stanford.edu/papers/synthesis-of-complex-audio-spectra-means-of-frequency-modulation">John Chowning (1973): The Synthesis of Complex Audio Spectra by Means of Frequency Modulation</a>, Journal of the Audio Engineering Society 21(7), 1973.</li>
+            <li><a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Yamaha_DX7">Wikipedia: Yamaha DX7</a> and <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Frequency_modulation_synthesis">Frequency modulation synthesis</a>.</li>
+        </ul>
+    </section>
+
+    <script src="app.js" type="module"></script>
+</body>
+</html>
