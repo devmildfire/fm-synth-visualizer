@@ -13,6 +13,7 @@
     <!-- Fixed-size stage (see --stage-w/--stage-h in style.css), scaled to the window width by app.js -->
     <div class="stage-wrap">
         <main class="signal-flow">
+            <header class="m-brand m-only"><span class="brand">FM Synth</span><span class="brand-sub">one sample at a time</span></header>
             <!-- Transport -->
             <section class="panel transport">
                 <div class="transport-top">
@@ -40,10 +41,10 @@
                     </div>
                 </div>
                 <div class="btns">
-                    <button id="start-btn"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2 1 L11 6 L2 11 Z"/></svg>Play</button>
-                    <button id="pause-btn" disabled><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2 1H5V11H2Z M7 1H10V11H7Z"/></svg>Pause</button>
-                    <button id="step-btn"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 1 L7 6 L1 11 Z M8 1H11V11H8Z"/></svg>Step</button>
-                    <button id="reset-btn"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 1H3V11H1Z M11 1 L4 6 L11 11 Z"/></svg>Reset</button>
+                    <button id="start-btn" aria-label="Play"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2 1 L11 6 L2 11 Z"/></svg>Play</button>
+                    <button id="pause-btn" aria-label="Pause" disabled><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2 1H5V11H2Z M7 1H10V11H7Z"/></svg>Pause</button>
+                    <button id="step-btn" aria-label="Step"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 1 L7 6 L1 11 Z M8 1H11V11H8Z"/></svg>Step</button>
+                    <button id="reset-btn" aria-label="Reset"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 1H3V11H1Z M11 1 L4 6 L11 11 Z"/></svg>Reset</button>
                 </div>
                 <div class="btns">
                     <label class="inline-label" for="jump-input">Jump to n</label>
@@ -84,7 +85,7 @@
             <section class="panel operator-box" id="modulator-box">
                 <h2>Modulator</h2>
                 <div class="formula">
-                    <div class="formula-substituted"><span class="tx">m(t) =</span><span class="slot param-slot"><span class="slot-value"><span id="mod-amplitude-term">1.00</span></span><span class="slot-label">Am</span></span><span class="tx">× sin(2π ×</span><span class="slot param-slot"><span class="slot-value"><span id="mod-frequency-term">220</span></span><span class="slot-label">fm</span></span><span class="tx">×</span><span class="slot time-slot"><span class="slot-value" id="mod-time-slot"><span id="mod-t">0.000 ms</span></span><span class="slot-label">t</span></span><span class="tx">) =</span><span class="slot out-slot"><span class="slot-value" id="mod-output-token"><span class="token-value">0.0000</span></span><span class="slot-label">m(t)</span></span></div>
+                    <div class="formula-substituted"><span class="tx m-only" style="--o:1"><span class="phi">φm</span> = 2π ×</span><span class="tx" style="--o:6">m(t) =</span><span class="slot param-slot" style="--o:7"><span class="slot-value"><span id="mod-amplitude-term">1.00</span></span><span class="slot-label">Am</span></span><span class="tx d-only">× sin(2π ×</span><span class="slot param-slot" style="--o:2"><span class="slot-value"><span id="mod-frequency-term">220</span></span><span class="slot-label">fm</span></span><span class="tx" style="--o:3">×</span><span class="slot time-slot" style="--o:4"><span class="slot-value" id="mod-time-slot"><span id="mod-t">0.000 ms</span></span><span class="slot-label">t</span></span><span class="tx d-only">) =</span><span class="tx m-only" style="--o:8">× sin(<span class="phi">φm</span>) =</span><span class="slot out-slot" style="--o:9"><span class="slot-value" id="mod-output-token"><span class="token-value">0.0000</span></span><span class="slot-label">m(t)</span></span><span class="eq-break m-only" style="--o:5"></span></div>
                 </div>
                 <div class="parameters">
                     <div class="param-group">
@@ -108,7 +109,7 @@
             <section class="panel operator-box" id="carrier-box">
                 <h2>Carrier</h2>
                 <div class="formula">
-                    <div class="formula-substituted"><span class="tx">y(t) =</span><span class="slot param-slot"><span class="slot-value"><span id="carrier-amplitude-term">0.20</span></span><span class="slot-label">Ac</span></span><span class="tx">× sin(2π ×</span><span class="slot param-slot"><span class="slot-value"><span id="carrier-frequency-term">440</span></span><span class="slot-label">fc</span></span><span class="tx">×</span><span class="slot time-slot"><span class="slot-value" id="carrier-time-slot"><span id="carrier-t">0.000 ms</span></span><span class="slot-label">t</span></span><span class="tx">+</span><span class="slot index-slot"><span class="slot-value" id="carrier-index-slot"><span id="modulation-index-term">2.00</span></span><span class="slot-label">I</span></span><span class="tx">×</span><span class="slot mod-slot"><span class="slot-value" id="carrier-mod-slot"><span id="carrier-mod-input">0.0000</span></span><span class="slot-label">m(t)</span></span><span class="tx">) =</span><span class="slot carrier-out-slot"><span class="slot-value" id="carrier-output-token"><span class="token-value">0.0000</span></span><span class="slot-label">y(t)</span></span></div>
+                    <div class="formula-substituted"><span class="tx m-only" style="--o:1"><span class="phi">φ</span> = 2π×</span><span class="tx" style="--o:10">y(t) =</span><span class="slot param-slot" style="--o:11"><span class="slot-value"><span id="carrier-amplitude-term">0.20</span></span><span class="slot-label">Ac</span></span><span class="tx d-only">× sin(2π ×</span><span class="slot param-slot" style="--o:2"><span class="slot-value"><span id="carrier-frequency-term">440</span></span><span class="slot-label">fc</span></span><span class="tx" style="--o:3">×</span><span class="slot time-slot" style="--o:4"><span class="slot-value" id="carrier-time-slot"><span id="carrier-t">0.000 ms</span></span><span class="slot-label">t</span></span><span class="tx" style="--o:5">+</span><span class="slot index-slot" style="--o:6"><span class="slot-value" id="carrier-index-slot"><span id="modulation-index-term">2.00</span></span><span class="slot-label">I</span></span><span class="tx" style="--o:7">×</span><span class="slot mod-slot" style="--o:8"><span class="slot-value" id="carrier-mod-slot"><span id="carrier-mod-input">0.0000</span></span><span class="slot-label">m(t)</span></span><span class="tx d-only">) =</span><span class="tx m-only" style="--o:12">× sin(<span class="phi">φ</span>) =</span><span class="slot carrier-out-slot" style="--o:13"><span class="slot-value" id="carrier-output-token"><span class="token-value">0.0000</span></span><span class="slot-label">y(t)</span></span><span class="eq-break m-only" style="--o:9"></span></div>
                 </div>
                 <div class="parameters">
                     <div class="param-group">
@@ -132,9 +133,21 @@
             <section class="panel scope">
                 <h2>Output y[n] · 10 ms</h2>
                 <p class="scope-label">Full speed: all <span class="rate-text">48 000</span> samples a second, as the audio plays them</p>
-                <svg id="scope-full" class="scope-trace" viewBox="0 0 1000 100" aria-label="Every output sample in the window"><line class="zero" x1="0" x2="1000" y1="50" y2="50"></line><polyline class="wave" id="scope-full-line"></polyline></svg>
-                <p class="scope-label">Animation, one sample at a time · bright: sent to the DAC, dim: still to come</p>
-                <svg id="scope-svg" class="scope-trace" viewBox="0 0 1000 100" aria-label="Samples traced by the animation"></svg>
+                <svg id="scope-full" class="scope-trace" viewBox="0 0 1000 100" preserveAspectRatio="none" aria-label="Every output sample in the window"><line class="zero" x1="0" x2="1000" y1="50" y2="50"></line><polyline class="wave" id="scope-full-line"></polyline></svg>
+                <p class="scope-label d-only">Animation, one sample at a time · bright: sent to the DAC, dim: still to come</p>
+                <svg id="scope-svg" class="scope-trace d-only" viewBox="0 0 1000 100" aria-label="Samples traced by the animation"></svg>
+            </section>
+
+            <!-- Phones: copies of the operator knobs next to the waveform they shape -->
+            <section class="panel tweak m-only" aria-label="Knobs next to the waveform">
+                <h2>Shape the waveform</h2>
+                <div class="tweak-knobs">
+                    <div class="param-group k-mod"><div class="knob-control"><div class="knob-face" aria-hidden="true"><span class="knob-pointer"></span></div><input class="knob-input" type="range" id="mirror-mod-amplitude" data-mirror="mod-amplitude" aria-label="Modulator amplitude Am"></div><label for="mirror-mod-amplitude">Am</label></div>
+                    <div class="param-group k-mod"><div class="knob-control"><div class="knob-face" aria-hidden="true"><span class="knob-pointer"></span></div><input class="knob-input" type="range" id="mirror-mod-frequency" data-mirror="mod-frequency" aria-label="Modulator frequency fm"></div><label for="mirror-mod-frequency">fm</label></div>
+                    <div class="param-group k-index"><div class="knob-control"><div class="knob-face" aria-hidden="true"><span class="knob-pointer"></span></div><input class="knob-input" type="range" id="mirror-modulation-index" data-mirror="modulation-index" aria-label="Modulation index I"></div><label for="mirror-modulation-index">I</label></div>
+                    <div class="param-group k-out"><div class="knob-control"><div class="knob-face" aria-hidden="true"><span class="knob-pointer"></span></div><input class="knob-input" type="range" id="mirror-carrier-amplitude" data-mirror="carrier-amplitude" aria-label="Carrier amplitude Ac"></div><label for="mirror-carrier-amplitude">Ac</label></div>
+                    <div class="param-group k-out"><div class="knob-control"><div class="knob-face" aria-hidden="true"><span class="knob-pointer"></span></div><input class="knob-input" type="range" id="mirror-carrier-frequency" data-mirror="carrier-frequency" aria-label="Carrier frequency fc"></div><label for="mirror-carrier-frequency">fc</label></div>
+                </div>
             </section>
 
             <!-- DAC -->

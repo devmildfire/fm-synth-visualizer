@@ -25,6 +25,9 @@ let currentSampleIndex = 0;
 let animationLoopGeneration = 0;
 let activeTokenAnimation = null;
 
+// Phones get a stacked layout (see the max-width: 760px block in style.css).
+const mobileQuery = window.matchMedia('(max-width: 760px)');
+
 // Sample rate from audio context
 let sampleRate = 48000;
 
@@ -97,6 +100,10 @@ async function init() {
     updateAllDisplays();
     fitStage();
     window.addEventListener('resize', fitStage);
+    mobileQuery.addEventListener('change', () => {
+        refreshVisualization(); // slot time format differs between layouts
+        fitStage();
+    });
     document.fonts?.ready.then(fitStage); // slot positions move once the web fonts arrive
 }
 
@@ -250,7 +257,29 @@ function nudgeKnob(input, direction) {
     }
 }
 
+// A knob copy (data-mirror) drives its original, and follows it when the original moves.
+function setupMirrors() {
+    document.querySelectorAll('.knob-input[data-mirror]').forEach(copy => {
+        const original = document.getElementById(copy.dataset.mirror);
+        for (const attr of ['min', 'max', 'step', 'data-scale']) {
+            if (original.hasAttribute(attr)) copy.setAttribute(attr, original.getAttribute(attr));
+        }
+        copy.value = original.value;
+        copy.addEventListener('input', () => {
+            if (original.value === copy.value) return;
+            original.value = copy.value;
+            original.dispatchEvent(new Event('input'));
+        });
+        original.addEventListener('input', () => {
+            if (copy.value === original.value) return;
+            copy.value = original.value;
+            updateKnob(copy);
+        });
+    });
+}
+
 function setupKnobs() {
+    setupMirrors();
     document.querySelectorAll('.knob-input').forEach(input => {
         const knob = input.parentElement;
         updateKnob(input);
@@ -308,6 +337,12 @@ function formatTimeMilliseconds(seconds) {
     return seconds < 1 ? `${(seconds * 1000).toFixed(3)} ms` : `${seconds.toFixed(5)} s`;
 }
 
+// Equation slots on phones drop the space: "999.979ms" fits a 9-character slot.
+function formatSlotTime(seconds) {
+    const text = formatTimeMilliseconds(seconds);
+    return mobileQuery.matches ? text.replace(' ', '') : text;
+}
+
 function formatSampleValue(value) {
     return value.toFixed(4);
 }
@@ -320,8 +355,8 @@ const PORT_STAGES = [
     {
         ids: ['mod-time-slot', 'carrier-time-slot', 'carrier-index-slot', 'mod-output-token'],
         fill: (sample) => {
-            elements.modT.textContent = formatTimeMilliseconds(sample.t);
-            elements.carrierT.textContent = formatTimeMilliseconds(sample.t);
+            elements.modT.textContent = formatSlotTime(sample.t);
+            elements.carrierT.textContent = formatSlotTime(sample.t);
             elements.modulationIndexTerm.textContent = params.I.toFixed(2);
             elements.modOutputToken.querySelector('.token-value').textContent = formatSampleValue(sample.modulator.output);
         }
@@ -451,7 +486,7 @@ function animateTokens(sampleIndex) {
         const stageDuration = 1000 / (animationSpeed * 3);
         const moveDuration = Math.max(60, stageDuration * 0.9);
 
-        const timeLabel = formatTimeMilliseconds(sample.t);
+        const timeLabel = formatSlotTime(sample.t);
         const clockToModToken = createMovingToken('clock-token', timeLabel, 'clock-to-mod');
         const clockToCarrierToken = createMovingToken('clock-token', timeLabel, 'clock-to-carrier');
         signalFlow.appendChild(clockToModToken);
@@ -616,11 +651,11 @@ function stageRect(el) {
     return { left, top, width: r.width / s, height: r.height / s, right: left + r.width / s, bottom: top + r.height / s };
 }
 
-// Fit the stage to the window width (narrow layout comes later).
+// Desktop: fit the fixed stage to the window width. Phones: the stage flows at its natural size.
 function fitStage() {
     const wrap = document.querySelector('.stage-wrap');
     const stageW = document.querySelector('.signal-flow').offsetWidth;
-    wrap.style.setProperty('--s', Math.min(1.35, (window.innerWidth - 32) / stageW));
+    wrap.style.setProperty('--s', mobileQuery.matches ? 1 : Math.min(1.35, (window.innerWidth - 32) / stageW));
     drawConnections();
     drawParameterArrows();
 }
@@ -672,6 +707,24 @@ function drawConnections() {
     };
 
     svg.setAttribute('viewBox', `0 0 ${container.width} ${container.height}`);
+    if (mobileQuery.matches) {
+        // Phones: blocks are stacked clock, modulator, index, carrier, DAC. Every input lands on the
+        // carrier's top (phase) line from above, so t takes a rail down the left edge and branches
+        // in below the index box; I drops straight in; m drops from the modulator's output.
+        const rail = 7;
+        const tBusY = (bottom(clock) + y(mod)) / 2;
+        const tInY = y(carrier) - 10;
+        const iInY = y(carrier) - 20;
+        const mJogY = y(carrier) - 30;
+        const yOutY = (bottom(carrier) + y(dac)) / 2;
+        setWire('clock-to-mod', [center(clockPort), [centerX(clockPort), tBusY], [centerX(modTimeSlot), tBusY], center(modTimeSlot)], halfH(clockPort), halfH(modTimeSlot));
+        setWire('clock-to-carrier', [center(clockPort), [centerX(clockPort), tBusY], [rail, tBusY], [rail, tInY], [centerX(carrierTimeSlot), tInY], center(carrierTimeSlot)], halfH(clockPort), halfH(carrierTimeSlot));
+        setWire('index-to-carrier', [center(indexOutput), [centerX(indexOutput), iInY], [centerX(carrierIndexSlot), iInY], center(carrierIndexSlot)], halfH(indexOutput), halfH(carrierIndexSlot));
+        setWire('mod-to-carrier', [center(modOutput), [centerX(modOutput), mJogY], [centerX(carrierModSlot), mJogY], center(carrierModSlot)], toSlotBottom(document.getElementById('mod-output-token')), halfH(carrierModSlot));
+        setWire('carrier-to-dac', [center(carrierOutput), [centerX(carrierOutput), yOutY], [centerX(dacInput), yOutY], center(dacInput)], toSlotBottom(document.getElementById('carrier-output-token')), halfH(dacInput));
+        return;
+    }
+
     // Inputs only ever drop onto or rise into their slot; nothing slides across an equation.
     const clockBranchY = (bottom(clock) + y(mod)) / 2;
     const indexRouteY = (bottom(stageRect(document.querySelector('.modulation-index'))) + y(carrier)) / 2;
@@ -729,7 +782,11 @@ function drawParameterArrows() {
         const sameBox = labelEl.closest('.operator-box') === termEl.closest('.operator-box');
 
         let d = `M ${toRight ? label.left : labelRight} ${lineY}`;
-        if (sameBox && clearsLabel && lineY > formulaBottom) {
+        if (lineY < formula.top) {
+            // Phones put phase knobs above the equation: run along the underline, then drop in.
+            const valueTop = getRelRect(termEl.closest('.slot-value')).top;
+            d += ` H ${termX} V ${valueTop}`;
+        } else if (sameBox && clearsLabel && lineY > formulaBottom) {
             d += ` H ${termX} V ${termBottom}`;
         } else {
             // The term sits right above the label, or the label lives in another box:

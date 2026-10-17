@@ -628,6 +628,142 @@ button:disabled {
 
 .docs-table th[scope="row"] { white-space: nowrap; }
 
+.phi { color: var(--c-mod); }
+
+/* Phone-only pieces stay out of the desktop stage */
+.m-only { display: none; }
+
+/* ---------- Phones: blocks stacked in signal order, transport stuck to the bottom ---------- */
+@media (max-width: 760px) {
+    body { padding: 0 0 24px; }
+    .d-only { display: none !important; }
+    .m-only { display: revert; }
+
+    .stage-wrap { width: auto; height: auto; }
+
+    .signal-flow {
+        position: relative;
+        width: auto;
+        height: auto;
+        transform: none;
+        display: flex;
+        flex-direction: column;
+        gap: 30px;
+        padding: 18px 10px 0 18px; /* the left gutter carries the t rail */
+    }
+
+    /* panels leave their desktop coordinates and flow */
+    .signal-flow > .panel {
+        position: relative !important;
+        left: auto !important;
+        top: auto !important;
+        width: auto !important;
+        height: auto !important;
+        padding: 12px 8px 14px;
+    }
+
+    .panel::before, .panel::after { width: 12px; height: 12px; }
+    .panel h2 { font-size: 13px; margin-bottom: 10px; }
+
+    .signal-flow .m-brand { display: flex; align-items: baseline; justify-content: space-between; order: 0; margin-bottom: -14px; }
+    .m-brand .brand { font-size: 34px; }
+    .m-brand .brand-sub { font-size: 11px; margin: 0; }
+
+    .clock-box { order: 1; display: grid; grid-template-columns: 1fr auto; align-items: end; column-gap: 10px; }
+    .clock-box h2 { grid-column: 1 / -1; }
+    .clock-values { font-size: 20px; margin: 0; }
+    #modulator-box { order: 2; }
+    .modulation-index { order: 3; align-self: flex-start; }
+    #carrier-box { order: 4; }
+    .dac-box { order: 5; align-self: flex-end; }
+    .scope { order: 6; }
+    .tweak { order: 7; }
+    .transport { order: 8; }
+
+    /* ports, slots and tokens at phone size */
+    .sample-token, .slot-value, .moving-token { height: 28px; padding: 0 2px; font-size: 19px; }
+    #clock-token { width: calc(14ch + 10px); }
+    #mi-output-token { width: calc(5ch + 10px); }
+    #dac-input-token { width: calc(7ch + 10px); }
+    .param-slot .slot-value { width: calc(4ch + 8px); }
+    .time-slot .slot-value { width: calc(9ch + 8px); }
+    .index-slot .slot-value { width: calc(5ch + 8px); }
+    .mod-slot .slot-value, .out-slot .slot-value, .carrier-out-slot .slot-value { width: calc(7ch + 8px); }
+    .slot-label { font-size: 15px; }
+
+    /* two-line equations: the phase line takes every input, the output line gives the result */
+    .formula-substituted { flex-wrap: wrap; gap: 8px 2px; font-size: 20px; padding: 10px 4px 6px; }
+    .formula-substituted > * { order: var(--o, 0); }
+    .formula-substituted .eq-break { display: block; flex-basis: 100%; height: 0; }
+    .tx { height: 28px; line-height: 28px; }
+
+    /* each knob sits beside the line it feeds: frequency above the equation, amplitude below */
+    .operator-box { display: flex; flex-direction: column; }
+    .operator-box .parameters { display: contents; }
+    .operator-box .formula { order: 2; }
+    .operator-box .param-group { align-self: flex-start; padding: 0 4px; gap: 6px; }
+    .operator-box .param-group:nth-child(2) { order: 1; flex-direction: column-reverse; margin-bottom: 14px; }
+    .operator-box .param-group:nth-child(1) { order: 3; margin-top: 14px; }
+    .param-group label { font-size: 12px; }
+
+    .knob-control { width: 46px; height: 46px; }
+    .knob-control::before { inset: -6px; -webkit-mask: radial-gradient(circle, transparent 26px, #000 26.5px); mask: radial-gradient(circle, transparent 26px, #000 26.5px); }
+    .knob-face::before { inset: 4px; }
+    .knob-pointer { top: 7px; height: 16px; transform-origin: 50% 16px; }
+
+    .mi-content { justify-content: flex-start; gap: 14px; padding: 0; }
+
+    .dac-box h2 { margin: 6px 0 0; }
+    .dac-box p { font-size: 12px; }
+
+    #scope-full { aspect-ratio: 330 / 110; }
+    .scope-label { font-size: 11px; }
+
+    .tweak-knobs { display: flex; justify-content: space-between; padding: 4px 4px 0; }
+    .tweak .param-group { gap: 8px; }
+    .tweak .param-group label { color: var(--muted); padding: 0; }
+    .tweak .k-mod .knob-control { --k: var(--c-mod); }
+    .tweak .k-index .knob-control { --k: var(--c-index); }
+    .tweak .k-out .knob-control { --k: var(--c-out); }
+
+    /* transport: a bar stuck to the bottom of the screen, in thumb reach */
+    .signal-flow > .transport {
+        position: sticky !important;
+        bottom: 0;
+        z-index: 30;
+        margin: 0 -10px 0 -18px;
+        padding: 10px 12px calc(12px + env(safe-area-inset-bottom, 0px));
+        background: linear-gradient(180deg, rgba(2, 8, 5, 0.85), var(--glass) 35%);
+        border: 0;
+        border-top: 1px solid rgba(57, 255, 136, 0.35);
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+    }
+    .transport::before, .transport::after { display: none; }
+    .transport-top { display: contents; }
+    .transport-top > div:first-child { display: none; }
+    .transport > .btns { margin: 0; gap: 6px; }
+    .transport > .btns:nth-child(2) { order: 1; }
+    .transport > .btns:nth-child(2) button { width: 40px; padding: 0; justify-content: center; gap: 0; font-size: 0; }
+    .transport > .btns:nth-child(2) button svg { width: 14px; height: 14px; }
+    .transport-knobs { order: 2; margin-left: auto; gap: 12px; }
+    .transport-knobs .param-group { display: grid; grid-template-columns: auto auto; align-items: center; column-gap: 5px; row-gap: 0; }
+    .transport-knobs .knob-control { grid-row: span 2; width: 34px; height: 34px; margin: 0; }
+    .transport-knobs .knob-control::before { inset: -4px; -webkit-mask: radial-gradient(circle, transparent 19px, #000 19.5px); mask: radial-gradient(circle, transparent 19px, #000 19.5px); }
+    .transport-knobs .knob-pointer { top: 5px; height: 12px; transform-origin: 50% 12px; }
+    .transport-knobs label { font-size: 11px; }
+    .transport-knobs .knob-value { font-size: 18px; }
+    .transport > .btns:nth-child(3) { order: 3; flex-basis: 100%; }
+    .transport .inline-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+    button, #jump-input { height: 40px; }
+    #audio-start-btn { margin-left: auto; }
+
+    .docs { width: auto; margin: 32px 10px 0 18px; padding: 20px 14px 22px; font-size: 15px; }
+    .docs h2 { font-size: 32px; }
+}
+
 @media (prefers-reduced-motion: reduce) {
     .sample-token, .slot-value { transition: none; }
 }
